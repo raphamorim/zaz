@@ -1,10 +1,10 @@
 # Zaz
 
-> Minimalist ad portable Editor powered by Rust.
+> Minimalist and portable Editor powered by Rust.
 
 ## Nothing to see here (this is my toy project)
 
-Play with online powered by WebAssembly: `TODO`
+Play with it online powered by WebAssembly + Rust: `TODO`
 
 ![Zaz demo](assets/zaz.png)
 
@@ -17,9 +17,9 @@ Play with online powered by WebAssembly: `TODO`
 ## Roadmap
 
 - [ ] Line Numbers, soft indent with tab key, copy and paste
-- [ ] Language supports
+- [ ] Language syntax highlight
 	- [ ] Markdown
-	- [ ] Rust
+	- [x] Rust
 	- [ ] JavaScript
 	- [ ] HTML and CSS
 - [ ] Multiple buffers

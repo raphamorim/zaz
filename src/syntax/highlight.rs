@@ -1,6 +1,5 @@
 use std::{cmp};
-use crossterm::style::Color;
-use crossterm::style::SetForegroundColor;
+use crossterm::style::{Color, SetForegroundColor};
 use crossterm::{queue};
 
 use crate::syntax_struct;
@@ -67,6 +66,23 @@ syntax_struct! {
     }
 }
 
+syntax_struct! {
+    struct MarkdownHighlight {
+        extensions:["md", "markdown"],
+        file_type:"markdown",
+        comment_start:"<!--",
+        keywords : {
+            [Color::Blue;
+                "#", "##", "###", "####"
+            ],
+            [Color::Magenta; 
+                ">","*","-"
+            ]
+        },
+        multiline_comment: Some(("<!--", "-->"))
+    }
+}
+
 #[macro_export]
 macro_rules! syntax_struct {
     (
@@ -119,11 +135,11 @@ macro_rules! syntax_struct {
             fn syntax_color(&self, highlight_type: &HighlightType) -> Color {
                 match highlight_type {
                     HighlightType::Normal => Color::Reset,
-                    HighlightType::Number => Color::Cyan,
+                    HighlightType::Number => Color::Green,
                     HighlightType::SearchMatch => Color::Blue,
-                    HighlightType::String => Color::Green,
+                    HighlightType::String => Color::Yellow,
                     HighlightType::CharLiteral => Color::DarkGreen,
-                    HighlightType::Comment | HighlightType::MultilineComment => Color::DarkGrey,
+                    HighlightType::Comment | HighlightType::MultilineComment => Color::Cyan,
                     HighlightType::Other(color) => *color
                 }
             }

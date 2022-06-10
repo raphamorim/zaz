@@ -3,13 +3,15 @@ use std::io::{stdout, Result};
 use std::{cmp};
 use std::time::{Duration, Instant};
 
+// use rand::Rng;
+
 use crossterm::event::KeyEvent;
 use crossterm::terminal::ClearType;
 use crossterm::event::KeyCode;
 use crossterm::{terminal, execute, cursor, style, queue};
 
 use crate::screen::Screen;
-use crate::syntax::highlight::{Highlight, HighlightType, RustHighlight};
+use crate::syntax::highlight::{Highlight, HighlightType, RustHighlight, MarkdownHighlight};
 use crate::editor::content::Content;
 use crate::editor::cursor::Cursor;
 use crate::editor::rows::Rows;
@@ -17,7 +19,7 @@ use crate::prompt;
 
 pub struct Output {
     pub win_size: (usize, usize),
-    pub editor_contents: Content,
+    pub content: Content,
     pub cursor: Cursor,
     pub rows: Rows,
     pub status_message: StatusMessage,
@@ -33,9 +35,18 @@ enum SearchDirection {
 
 const VERSION: &str = "0.1.0";
 
+const COLOR_PURPLE: &str = "\\e[0;35m";
+const COLOR_LIGHT_PURPLE: &str = "\\e[1;35m";
+const COLOR_LIGHT_BLUE: &str = "\\e[1;34m";
+const COLOR_LIGHT_GREEN: &str = "\\e[1;32m";
+const COLOR_YELLOW: &str = "\\e[1;33m";
+
 impl Output {
     pub fn select_syntax(extension: &str) -> Option<Box<dyn Highlight>> {
-        let list: Vec<Box<dyn Highlight>> = vec![Box::new(RustHighlight::new())];
+        let list: Vec<Box<dyn Highlight>> = vec![
+            Box::new(RustHighlight::new()),
+            Box::new(MarkdownHighlight::new())
+        ];
         list.into_iter()
             .find(|it| it.extensions().contains(&extension))
     }
@@ -47,11 +58,11 @@ impl Output {
         let mut syntax_highlight = None; // modify
         Self {
             win_size,
-            editor_contents: Content::new(),
+            content: Content::new(),
             cursor: Cursor::new(win_size),
             rows: Rows::new(&mut syntax_highlight), //modify
             status_message: StatusMessage::new(
-                "HELP: Ctrl-S = Save | Ctrl-Q = Quit | Ctrl-F = Find".into(),
+                "Ctrl-S = Save | Ctrl-Q = Quit | Ctrl-F = Find".into(),
             ),
             dirty: 0,
             search_index: SearchIndex::new(),
@@ -165,12 +176,12 @@ impl Output {
 
     fn draw_message_bar(&mut self) {
         queue!(
-            self.editor_contents,
+            self.content,
             terminal::Clear(ClearType::UntilNewLine)
         )
         .unwrap();
         if let Some(msg) = self.status_message.message() {
-            self.editor_contents
+            self.content
                 .push_str(&msg[..cmp::min(self.win_size.0, msg.len())]);
         }
     }
@@ -256,7 +267,7 @@ impl Output {
     }
 
     fn draw_status_bar(&mut self) {
-        self.editor_contents
+        self.content
             .push_str(&style::Attribute::Reverse.to_string());
         let info = format!(
             "{} {} -- {} lines",
@@ -265,40 +276,45 @@ impl Output {
                 .as_ref()
                 .and_then(|path| path.file_name())
                 .and_then(|name| name.to_str())
-                .unwrap_or("[No Name]"),
+                .unwrap_or("[unnamed]"),
             if self.dirty > 0 { "(modified)" } else { "" },
             self.rows.number_of_rows()
         );
         let info_len = cmp::min(info.len(), self.win_size.0);
-        /* modify the following */
         let line_info = format!(
-            "{} | {}/{}",
+            "{} • {}/{}  ",
             self.syntax_highlight
                 .as_ref()
                 .map(|highlight| highlight.file_type())
-                .unwrap_or("no ft"),
+                .unwrap_or(""),
             self.cursor.cursor_y + 1,
             self.rows.number_of_rows()
         );
-        self.editor_contents.push_str(&info[..info_len]);
+        self.content.push_str(&info[..info_len]);
         for i in info_len..self.win_size.0 {
             if self.win_size.0 - i == line_info.len() {
-                self.editor_contents.push_str(&line_info);
+                self.content.push_str(&line_info);
                 break;
             } else {
-                self.editor_contents.push(' ')
+                self.content.push(' ')
             }
         }
-        self.editor_contents
+        self.content
             .push_str(&style::Attribute::Reset.to_string());
-        self.editor_contents.push_str("\r\n");
+        self.content.push_str("\r\n");
     }
 
     pub fn draw_rows(&mut self) {
+        // let mut rng = rand::thread_rng();
+        // let thread_random: f64 = rng.gen();
         let screen_rows = self.win_size.1;
         let screen_columns = self.win_size.0;
         for i in 0..screen_rows {
             let file_row = i + self.cursor.row_offset;
+            // let y: f64 = rng.gen(); // generates a float between 0 and 1
+            // let mut nums: Vec<i32> = (1..100).collect();
+            // nums.shuffle(&mut rng);
+            // const left: String = format!("{}•{}", COLOR_LIGHT_PURPLE, COLOR_LIGHT_PURPLE).to_string();
             if file_row >= self.rows.number_of_rows() {
                 if self.rows.number_of_rows() == 0 && i == screen_rows / 3 {
                     let mut welcome = format!("ZAZ - {}", VERSION);
@@ -307,13 +323,20 @@ impl Output {
                     }
                     let mut padding = (screen_columns - welcome.len()) / 2;
                     if padding != 0 {
-                        self.editor_contents.push('~');
+                        self.content.push('•');
                         padding -= 1
                     }
-                    (0..padding).for_each(|_| self.editor_contents.push(' '));
-                    self.editor_contents.push_str(&welcome);
+                    (0..padding).for_each(|_| self.content.push(' '));
+                    self.content.push_str(&welcome);
                 } else {
-                    self.editor_contents.push('~');
+                    self.content.push('•');
+                    // let row = self.rows.get_editor_row(file_row);
+                    // let column_offset = self.cursor.column_offset;
+                    // self.syntax_highlight.color_row(
+                    //     &row.render, 
+                    //     &row.highlight,
+                    //     &mut self.content,
+                    // );
                 }
             } else {
                 let row = self.rows.get_editor_row(file_row);
@@ -328,17 +351,17 @@ impl Output {
                         syntax_highlight.color_row(
                             &render,
                             &row.highlight[start..start + len],
-                            &mut self.editor_contents,
+                            &mut self.content,
                         )
                     })
-                    .unwrap_or_else(|| self.editor_contents.push_str(&render));
+                    .unwrap_or_else(|| self.content.push_str(&render));
             }
             queue!(
-                self.editor_contents,
+                self.content,
                 terminal::Clear(ClearType::UntilNewLine)
             )
             .unwrap();
-            self.editor_contents.push_str("\r\n");
+            self.content.push_str("\r\n");
         }
     }
 
@@ -349,18 +372,18 @@ impl Output {
 
     pub fn refresh_screen(&mut self) -> crossterm::Result<()> {
         self.cursor.scroll(&self.rows);
-        queue!(self.editor_contents, cursor::Hide, cursor::MoveTo(0, 0))?;
+        queue!(self.content, cursor::Hide, cursor::MoveTo(0, 0))?;
         self.draw_rows();
         self.draw_status_bar();
         self.draw_message_bar();
         let cursor_x = self.cursor.render_x - self.cursor.column_offset;
         let cursor_y = self.cursor.cursor_y - self.cursor.row_offset;
         queue!(
-            self.editor_contents,
+            self.content,
             cursor::MoveTo(cursor_x as u16, cursor_y as u16),
             cursor::Show
         )?;
-        self.editor_contents.flush()
+        self.content.flush()
     }
 }
 

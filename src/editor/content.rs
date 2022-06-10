@@ -1,7 +1,7 @@
 use std::io::{stdout, ErrorKind, Result, Write};
 
 pub struct Content {
-    content: String,
+    pub content: String,
 }
 
 impl Content {

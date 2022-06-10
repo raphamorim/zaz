@@ -1,14 +1,26 @@
 # Zaz
 
-Small Rust Editor made for terminal usage
+Minimalist ad portable Editor powered by Rust.
+
+Play with online powered by WebAssembly: `TODO`
 
 ![Zaz demo](assets/zaz.png)
 
 ## Installing:
 
 ```bash
-curl 
+# TODO: Script to install it
 ```
+
+## Roadmap
+
+- [ ] Line Numbers, soft indent with tab key, copy and paste
+- [ ] Language supports
+	- [ ] Markdown
+	- [ ] Rust
+	- [ ] JavaScript
+	- [ ] HTML and CSS
+- [ ] Multiple buffers
 
 ## Development
 

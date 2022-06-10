@@ -1,6 +1,8 @@
 # Zaz
 
-Minimalist ad portable Editor powered by Rust.
+> Minimalist ad portable Editor powered by Rust.
+
+## Nothing to see here (this is my toy project)
 
 Play with online powered by WebAssembly: `TODO`
 

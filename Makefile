@@ -3,3 +3,6 @@ build:
 
 start:
 	cargo run
+
+watch:
+	cargo watch -- make start
